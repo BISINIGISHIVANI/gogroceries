@@ -21,7 +21,7 @@ await connectDB()
 await connectCloudinary()
 
 // Allow Multiple origins
-const allowedOrigins=['http://localhost:5173']
+const allowedOrigins=['http://localhost:5173','https://gogroceries-backend.vercel.app']
 
 app.post('/stripe',express.raw({type:'application/json'}),stripeWebhooks)
 
