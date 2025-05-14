@@ -21,15 +21,14 @@ await connectDB()
 await connectCloudinary()
 
 // Allow Multiple origins
-const allowedOrigins=['http://localhost:5173','https://gogroceries-backend.vercel.app']
-
+const allowedOrigins=['http://localhost:5173','https://gogroceries.vercel.app']
+// https://gogroceries.vercel.app https://gogroceries-backend.vercel.app
 app.post('/stripe',express.raw({type:'application/json'}),stripeWebhooks)
 
 //Middleware configuration
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({origin:allowedOrigins,credentials:true}))
-
 
 app.get('/',(req,res)=>{
     res.send('Api is working')
