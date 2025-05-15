@@ -209,8 +209,7 @@ export const AppContext =createContext();
             updateWishlist()
         }
 
-    }
-    , [wishlistItems])
+    }, [wishlistItems])
     const value={navigate,user,setUser,isSeller,setIsSeller,showUserLogin,setShowUserLogin,products,currency,cartItems,setCartItems,addToCart,updateCart,removeFromCart
         ,searchQuery,setSearchQuery,getCartCount,getCartTotal,axios,
         fetchProducts,clearCartItem,wishlistItems,setWishlistItems,addToWishlist,removeFromWishlist

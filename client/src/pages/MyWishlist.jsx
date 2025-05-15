@@ -1,34 +1,43 @@
 import React from 'react'
 import { useAppContext } from '../context/AppContext'
-import { useEffect } from 'react';
-import axios from 'axios';
-import toast from 'react-hot-toast';
-
+import { useEffect ,useState} from 'react';
+import ProductCard from '../components/ProductCard';
 
 const MyWishlist = () => {
-    const {wishlistItems,user,setWishlistItems}=useAppContext();
-    console.log('wishlistItems:', wishlistItems)
+    const {wishlistItems,products}=useAppContext();
+    const [wishlistArray,setWishlistArray]=useState([]);
+
     const fetchWishlist=async () => {
-        try {
-            const {data}=await axios.get('/api/wishlist/list')
-            // if(data.success){
-            //     setWishlistItems(data.wishlistItems);
-            // }
-        } catch (error) {
-            toast.error(data.message)
+      const wishlistArray=[];
+      for(let key in wishlistItems){
+        const product=products.find((product)=>product._id===key);
+        if(product){
+            wishlistArray.push(product);
         }
+      }
+      setWishlistArray(wishlistArray);
     }
     useEffect(() => {
-        if(user){
+        if(products.length > 0 && wishlistItems){
             fetchWishlist();
         }
-      }, [user])
+      }, [products,wishlistItems])
   return (
     <div className='flex flex-col mt-16'>
           <div className='flex flex-col items-end w-max'>
             <p className='text-2xl font-medium uppercase'>My  Wishlist</p>
-            <div className='w-16 h-0.5 bg-primary rounded-full'></div>
+            <div className='w-16 h-0.5 bg-primary rounded-full'> </div>
         </div>
+        {wishlistArray.length>0 ? (
+        <div className='grid grid-cols-2 sm:grid-cols-3 mt-6 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6 ' >
+            {wishlistArray.filter((product=>product.inStock)).map((product)=>(
+                <ProductCard key={product._id} product={product}/>
+            ))}
+        </div>):
+        <div className='flex flex-col items-center justify-center h-[60vh]'>
+            <p className='text-2xl font-medium text-primary'>No products found 🧐</p>
+            </div>
+              }
     </div>
   )
 }
