@@ -16,7 +16,10 @@ export const AppContext =createContext();
     const [isSeller,setIsSeller] = useState(false);
     const [showUserLogin,setShowUserLogin] = useState(false);
     const [products,setProducts] = useState([]);
-    const [cartItems,setCartItems] = useState({});
+    const [cartItems,setCartItems] = useState(()=>{
+        const savedCart = localStorage.getItem('cartItems');
+    return savedCart ? JSON.parse(savedCart) : {};
+    });
     const [searchQuery,setSearchQuery]=useState({})
     const [wishlistItems,setWishlistItems]=useState([])
 
@@ -190,7 +193,7 @@ export const AppContext =createContext();
         if(user){
             updateCart()
         }
-
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
     },[cartItems])
 
     useEffect(()=>{
@@ -210,6 +213,7 @@ export const AppContext =createContext();
         }
 
     }, [wishlistItems])
+
     const value={navigate,user,setUser,isSeller,setIsSeller,showUserLogin,setShowUserLogin,products,currency,cartItems,setCartItems,addToCart,updateCart,removeFromCart
         ,searchQuery,setSearchQuery,getCartCount,getCartTotal,axios,
         fetchProducts,clearCartItem,wishlistItems,setWishlistItems,addToWishlist,removeFromWishlist
