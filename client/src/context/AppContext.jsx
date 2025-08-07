@@ -16,12 +16,14 @@ export const AppContext =createContext();
     const [isSeller,setIsSeller] = useState(false);
     const [showUserLogin,setShowUserLogin] = useState(false);
     const [products,setProducts] = useState([]);
-    const [cartItems,setCartItems] = useState(()=>{
-        const savedCart = localStorage.getItem('cartItems');
-    return savedCart ? JSON.parse(savedCart) : {};
-    });
+  
     const [searchQuery,setSearchQuery]=useState({})
-    const [wishlistItems,setWishlistItems]=useState([])
+    const [wishlistItems, setWishlistItems] = useState({});
+const [cartItems, setCartItems] = useState({});
+
+
+
+
 
 
     // fetch Seller Status
@@ -39,19 +41,28 @@ export const AppContext =createContext();
     }
 
     // fetch User Status
-    const fetchUser=async ()=>{
+    const fetchUser = async () => {
         try {
-            const {data}=await axios.get('/api/user/is-auth')
-            if(data.success){
-                setUser(data.user)
-                setCartItems(data.user.cartItems)
-                setWishlistItems(data.user.wishlistItems)
+            const { data } = await axios.get('/api/user/is-auth');
+            if (data.success) {
+                setUser(data.user);
+                
+                // Merge server data with localStorage for authenticated users
+                const localCart = JSON.parse(localStorage.getItem('cartItems') || '{}');
+                const localWishlist = JSON.parse(localStorage.getItem('wishlistItems') || '{}');
+                
+                // Merge logic: combine server + local data
+                const mergedCart = { ...localCart, ...(data.user.cartItems || {}) };
+                const mergedWishlist = { ...localWishlist, ...(data.user.wishlistItems || {}) };
+                
+                setCartItems(mergedCart);
+                setWishlistItems(mergedWishlist);
             }
         } catch (error) {
-            setUser(null)
+            setUser(null);
         }
-    }
-
+    };
+    
     // fetch All Products
     const fetchProducts=async () => {
        try {
@@ -68,37 +79,25 @@ export const AppContext =createContext();
     }
 
     // Add to Wishlist
-    const addToWishlist=async (productId) => {
-        try {
-            const wishlistData=structuredClone(wishlistItems);
-            if(wishlistData[productId]){
-                wishlistData[productId]+=1;
-            }else{
-                wishlistData[productId]=1;
+    const addToWishlist = (productId) => {
+        const wishlistData = { ...wishlistItems };
+        wishlistData[productId] = (wishlistData[productId] || 0) + 1;
+        setWishlistItems(wishlistData);
+        toast.success('Added to wishlist');
+    };
+    
+    const removeFromWishlist = (productId) => {
+        const wishlistData = { ...wishlistItems };
+        if (wishlistData[productId]) {
+            wishlistData[productId] -= 1;
+            if (wishlistData[productId] === 0) {
+                delete wishlistData[productId];
             }
             setWishlistItems(wishlistData);
-            toast.success('Product added to wishlist');
-        }catch (error) {
-            toast.error(error.message)
+            toast.success('Removed from wishlist');
         }
-    }
-
-    // Remove from Wishlist
-    const removeFromWishlist=async (productId) => {
-        try {
-            let wishlistData=structuredClone(wishlistItems);
-            if(wishlistData[productId]){
-                wishlistData[productId]-=1;
-                if(wishlistData[productId]===0){
-                    delete wishlistData[productId];
-                }
-            }
-            setWishlistItems(wishlistData);
-            toast.success('Product removed from wishlist');
-        }catch (error) {
-            toast.error(error.message)
-        }
-    }
+    };
+    
   
 
     //Add to Cart
@@ -174,46 +173,46 @@ export const AppContext =createContext();
     useEffect(() => {
         fetchSeller();
         fetchUser()
-        fetchProducts();
-        
+        fetchProducts();     
     },[])
 
-    useEffect(()=>{
-        const updateCart=async ()=>{
+  
+
+
+    useEffect(() => {
+        if (!user) {
+            // Load from localStorage for guest users
+            const savedCart = localStorage.getItem('cartItems');
+            const savedWishlist = localStorage.getItem('wishlistItems');
+            
+            if (savedCart) setCartItems(JSON.parse(savedCart));
+            if (savedWishlist) setWishlistItems(JSON.parse(savedWishlist));
+        }
+    }, [user]);
+    useEffect(() => {
+        const updateUserData = async () => {
+            if (!user) return;
+            
             try {
-                const {data}=await axios.post('/api/cart/update',{cartItems})
-                if(!data.success){
-                    toast.error(data.message)
-                }   
+                await Promise.all([
+                    axios.post('/api/cart/update', { cartItems }),
+                    axios.post('/api/wishlist/update', { wishlistItems })
+                ]);
             } catch (error) {
-                toast.error(error.message)
+                toast.error('Failed to sync data');
             }
-           
-        }
-        if(user){
-            updateCart()
-        }
+        };
+        
+        
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
-    },[cartItems])
-
-    useEffect(()=>{
-        const updateWishlist=async ()=>{
-            try {
-                const {data}=await axios.post('/api/wishlist/update',{wishlistItems})
-                if(!data.success){
-                    toast.error(data.message)
-                }   
-            } catch (error) {
-                toast.error(error.message)
-            }
-           
+        localStorage.setItem('wishlistItems', JSON.stringify(wishlistItems));
+        
+       
+        if (user) {
+            updateUserData();
         }
-        if(user){
-            updateWishlist()
-        }
-
-    }, [wishlistItems])
-
+    }, [cartItems, wishlistItems, user]);
+    
     const value={navigate,user,setUser,isSeller,setIsSeller,showUserLogin,setShowUserLogin,products,currency,cartItems,setCartItems,addToCart,updateCart,removeFromCart
         ,searchQuery,setSearchQuery,getCartCount,getCartTotal,axios,
         fetchProducts,clearCartItem,wishlistItems,setWishlistItems,addToWishlist,removeFromWishlist
